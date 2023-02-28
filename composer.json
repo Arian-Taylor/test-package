@@ -9,6 +9,7 @@
             "email": "arianrabeson@gmail.com"
         }
     ],
+    "version": "1.0.0",
     "require": {
         "php": ">=8.0",
         "dompdf/dompdf": "^2.0",
