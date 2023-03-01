@@ -1,5 +1,5 @@
 <?php
-namespace AT\Utilities;
+namespace Pw\Exports;
 
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -8,22 +8,22 @@ use PhpOffice\PhpSpreadsheet\Style\Color;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
-class ExportExcelService {
-
-    const DICTIONARY = [];
+class ExportExcel {
 
     /**
-     * Private methode to format datas of export
-     * @param [] $key_data, array collection ex: [["id": 1, "firstname": "John"], ["id": 2, "firstname": "Janne"]]
-     * @param [] $key_labels, ex: ["Id" => "id", "Nom et Prénom" => "lastname_firstname"]
+     * Methode to format datas of export
      * @param string $onglet_name
+     * @param [] $key_values, array collection ex: [["id": 1, "firstname": "John"], ["id": 2, "firstname": "Janne"]]
+     * @param [] $key_labels, ex: ["Id" => "id", "Nom et Prénom" => "lastname_firstname"]
+     * @param [] $dictonary
      * 
      * @return []
      */
     public function formatExport(
-        $key_data, 
+        $onglet_name,
+        $key_values, 
         $key_labels, 
-        $onglet_name
+        $dictonary = [] 
     ){
         $result = [
             'onglet' => '',
@@ -44,11 +44,11 @@ class ExportExcelService {
 
         $table_data[$onglet_name][] = $ths ; // Set th table
 
-        foreach ($key_data as $data) {
+        foreach ($key_values as $data) {
 
             $tr = [] ;
             foreach ($tds as $td) {
-                $tr[] = $this->parseTd($data, $td) ;
+                $tr[] = $this->parseTd($data, $td, $dictonary) ;
             }
 
             $table_data[$onglet_name][] = $tr ; // add an td(s) table
@@ -64,27 +64,25 @@ class ExportExcelService {
      * Private methode to format and render content of each column
      * @param [] $data
      * @param string $td, ex : "id", "firstname", "firstname_lastname", "created_at"
+     * @param [] $dictonary
      * 
      * @return string
      */
-    private function parseTd($data, $td)
+    private function parseTd($data, $td, $dictonary = [])
     {
-        $child = get_called_class();
-
         $opt = null;
         $value = $data[$td];
+
         if ($value && $value === "undefined") {
             return null;
         }
 
         if (
-            isset($child) &&
-            $child &&
-            $child::DICTIONARY !== null &&
-            isset($child::DICTIONARY[$td])
+            isset($dictonary[$td])
         ) {
-            $opt = $child::DICTIONARY[$td];
+            $opt = $dictonary[$td];
         }
+
         if (
             $opt && 
             is_array($opt)
@@ -95,6 +93,7 @@ class ExportExcelService {
                 $value = null;
             }
         }
+
         return $value;
     }
 
@@ -301,7 +300,7 @@ class ExportExcelService {
      * @param mixed $default
      * 
      */
-    public static function get($array, $key, $default=null){
+    private function get($array, $key, $default=null){
         if(is_array($array) && $key){
             if(strpos($key, '|') > 0){
                 list($field, $prop) = explode('|', $key);

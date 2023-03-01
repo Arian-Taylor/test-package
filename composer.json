@@ -9,7 +9,7 @@
             "email": "arianrabeson@gmail.com"
         }
     ],
-    "version": "1.0.3",
+    "version": "1.0.4",
     "require": {
         "php": ">=8.0",
         "dompdf/dompdf": "^2.0",
@@ -17,7 +17,7 @@
     },
     "autoload": {
         "psr-4": {
-            "AT\\": "src/"
+            "Pw\\": "src/"
         }
     }
 }

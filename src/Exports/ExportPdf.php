@@ -1,12 +1,10 @@
 <?php
-namespace AT\Utilities;
+namespace Pw\Exports;
 
 use Dompdf\Dompdf;
 use Dompdf\Options;
 
-class ExportPdfService {
-
-    const DICTIONARY = [];
+class ExportPdf {
 
     /**
      * Generate dompdf
@@ -39,16 +37,19 @@ class ExportPdfService {
     }
 
     /**
-     * Private methode to format datas of export
-     * @param [] $key_value, array collection ex: [["id": 1, "firstname": "John"], ["id": 2, "firstname": "Janne"]]
+     * Methode to format datas of export
+     * @param [] $key_values, array collection ex: [["id": 1, "firstname": "John"], ["id": 2, "firstname": "Janne"]]
      * @param [] $key_labels, ex: ["Id" => "id", "Nom et Prénom" => "lastname_firstname"]
+     * @param [] $dictonary
      * 
      * @return []
      */
     public function formatExport(
-        $key_value, 
-        $key_labels
+        $key_values, 
+        $key_labels, 
+        $dictonary = [] 
     ){
+
         $result = [] ;
 
         foreach ($key_labels as $key_label) {
@@ -64,16 +65,16 @@ class ExportPdfService {
             $format_data["model"] = $model ;
 
             if (
-                is_array($this->parseValue($key_value, $key)) && 
+                is_array($this->parseValue($key_values, $key)) && 
                 $key_labels
             ) {
-                $values = $this->parseValue($key_value, $key);
+                $values = $this->parseValue($key_values, $key);
                 $format_data["value"] = [] ;
                 foreach($values as $value) {
                     $format_data["value"][] = $this->formatExport($value, $key_labels) ;
                 }
             } else {
-                $format_data["value"] = $this->format_value($key_value, $key_labels, $key) ;
+                $format_data["value"] = $this->format_value($key_values, $key_labels, $key, $dictonary) ;
             }
             
 
@@ -85,7 +86,16 @@ class ExportPdfService {
     }
 
 
-    public function format_value($key_value, $key_labels, $key) {
+    /**
+     * Methode to format value of export
+     * @param [] $key_values, array collection ex: [["id": 1, "firstname": "John"], ["id": 2, "firstname": "Janne"]]
+     * @param [] $key_labels, ex: ["Id" => "id", "Nom et Prénom" => "lastname_firstname"]
+     * @param string $key
+     * @param [] $dictonary
+     * 
+     * @return [] | string
+     */
+    public function format_value($key_values, $key_labels, $key, $dictonary = []) {
 
         $result = null;
         if (
@@ -93,7 +103,7 @@ class ExportPdfService {
             is_array($key_labels)
         ) {
             $result = [];
-            $key_value = $key_value[$key];
+            $key_values = $key_values[$key];
 
             foreach ($key_labels as $key_label) {
 
@@ -107,12 +117,12 @@ class ExportPdfService {
                 $format_data["label"] = $_label ;
                 $format_data["model"] = $_model ;
 
-                $format_data["value"] = $this->format_value($key_value, $_key_labels, $_key) ;
+                $format_data["value"] = $this->format_value($key_values, $_key_labels, $_key, $dictonary) ;
                 
                 $result[] = $format_data ;
             }
         } else {
-            $result = $this->parseValue($key_value, $key);
+            $result = $this->parseValue($key_values, $key, $dictonary);
         }
 
         return $result;
@@ -120,15 +130,15 @@ class ExportPdfService {
     }
 
     /**
-     * Private methode to format and render content of each column
+     * Private methode to format and render value of key
      * @param [] $data
      * @param string $key, ex : "id", "firstname", "firstname_lastname", "created_at"
+     * @param [] $dictonary
      * 
      * @return string
      */
-    private function parseValue($data, $key)
+    private function parseValue($data, $key, $dictonary = [])
     {
-        $child = get_called_class();
 
         if (!array_key_exists($key, $data)) {
             return null;
@@ -142,12 +152,9 @@ class ExportPdfService {
         }
 
         if (
-            isset($child) &&
-            $child &&
-            $child::DICTIONARY !== null &&
-            isset($child::DICTIONARY[$key])
+            isset($dictonary[$key])
         ) {
-            $opt = $child::DICTIONARY[$key];
+            $opt = $dictonary[$key];
         }
 
         if (
@@ -172,7 +179,7 @@ class ExportPdfService {
      * @param mixed $default
      * 
      */
-    public static function get($array, $key, $default=null){
+    private function get($array, $key, $default=null){
         if(is_array($array) && $key){
             if(strpos($key, '|') > 0){
                 list($field, $prop) = explode('|', $key);
